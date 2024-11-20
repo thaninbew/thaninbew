@@ -1,2 +1,2 @@
--  Hi, I’m @thaninbew
--  I’m currently studying Computer Science and Game Development at Northeastern University.
+Thanin Kongkiatsophon
+CS & Music Tech @ Northeastern University 
