@@ -1,6 +1,6 @@
-## Thanin Kongkiatsophon
-CS & Music Tech, Minor in Game Design @ Northeastern University   
+## 👋 Hello! I'm Thanin Kongkiatsophon (you can call me Bew)  
+🎓 CS & Music Tech, Minor in Game Design @ Northeastern University  
 
-Full-Stack Developer, passionate about building software that improves lives, whether my code is solving small everyday problems or driving large scale innovation.
+💻 I'm a **Full-Stack Developer** passionate about creating software that makes life better—whether it's solving small everyday problems or driving large-scale innovation.  
 
-I thrive at the intersection of Software, Music, and Game Development, where creativity meets technology.
+🎶🎮 I thrive at the intersection of **Software, Music, and Game Development**, where creativity meets technology.  
