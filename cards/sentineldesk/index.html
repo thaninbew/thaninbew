@@ -11,7 +11,7 @@
 .hero{
   --fg:#16161f;--muted:#f1f1f6;--mfg:#5b5e70;--line:#e3e3ec;
   --info-t:#eceffe;--info-f:#2e45c4;--crit-t:#fdecec;--crit-f:#b42323;--ok-t:#e5f4eb;--ok-f:#146c3c;
-  --ai:linear-gradient(90deg,#f0644a,#d9468f 35%,#8a5cf5 70%,#3478f6);
+  --ai:linear-gradient(90deg,#cfe0ff,#3478f6);
   --ease:cubic-bezier(.2,0,0,1);
   --mono:"Google Sans Code",ui-monospace,SFMono-Regular,Menlo,monospace;
   font:22px/1.5 Manrope,system-ui,sans-serif;color:var(--fg);background:#060a20}
@@ -36,7 +36,7 @@
 .ai{overflow:hidden;border-radius:22px}
 .ai .strip{position:absolute;inset:0 0 auto 0;height:4px;background:var(--ai);background-size:100% 100%}
 .aihead{display:flex;align-items:center;gap:12px;margin:0;font-weight:600}
-.aimark{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:9px;background:var(--ai);color:#fff;font-size:19px}
+.aimark{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:9px;background:#1e2f73;color:#fff;font-size:19px}
 .stack{display:grid}.stack>*{grid-area:1/1}
 .badge{display:inline-flex;align-items:center;gap:7px;font-size:18px;line-height:1;font-weight:600;border-radius:9px;padding:7px 12px;white-space:nowrap}
 .badge svg.i{font-size:19px}
@@ -200,7 +200,7 @@ const landHost = document.getElementById('land');
 const shadow = landHost.attachShadow({ mode: 'open' });
 shadow.innerHTML = `<style>${LANDING.css}</style><div class="page">${LANDING.sprite}${LANDING.header}</div>`;
 const $L = s => shadow.querySelector(s), $$L = s => [...shadow.querySelectorAll(s)];
-const lNav = $L('.nav'), lCopy = $L('.copy'), lSample = $L('.stagewrap > .sample'), lCard = $L('.stage .center'), lSides = $$L('.stage .side');
+const lTop = [$L('.nav'), $L('.copy'), $L('.stagewrap > .sample')].filter(Boolean), lCard = $L('.stage .center'), lSides = $$L('.stage .side');
 lCard.style.transformOrigin = '0 0';
 
 // ======================= Scene elements =======================
@@ -209,7 +209,7 @@ const reply = $('.reply'), inbox = $('.inbox'), brief = $('.brief'), ghost = $('
 reply.style.transformOrigin = '0 0';
 
 // ======================= Timing =======================
-const LOOP = 11000, S = 424;   // S: the scroll that puts the landing's reply card at the scene card's top (556 -> 132)
+const LOOP = 11000;
 const cue = {
   scroll: 700,      // the landing scrolls down (800 ms)
   morph: 1500,      // the landing's Grounded reply card becomes the scene's (700 ms)
@@ -267,6 +267,7 @@ const ROOM = b + 900, FLY = [b + 1100, 320], SWEEP = [a + 450, 1250];
 
 // The hand-off: the landing card's box at scroll S, and the scene card's box. One uniform scale maps one to the other.
 const hr = hero.getBoundingClientRect(), lr = lCard.getBoundingClientRect(), rr = reply.getBoundingClientRect();
+const S = Math.round(lr.top - rr.top);   // the scroll that puts the landing's reply card at the scene card's top
 const LB = { x: lr.left - hr.left, y: lr.top - hr.top - S, w: lr.width, h: lr.height }, RB = { x: rr.left - hr.left, y: rr.top - hr.top, w: rr.width, h: rr.height };
 const K = RB.w / LB.w;
 const lKids = [...lCard.children], rKids = [...reply.children].filter(e => !e.classList.contains('strip'));
@@ -279,7 +280,7 @@ window.__frame = ms => {
   const sc = easeIO(span(t, cue.scroll, 800)) * (1 - easeIO(span(t, cue.scrollUp, 800)));
   set(landHost, 'transform', `translateY(${(-S * sc).toFixed(2)}px)`);
   const copyO = first ? 1 - span(t, cue.scroll + 300, 450) : span(t, cue.scrollUp + 200, 500);
-  for (const e of [lNav, lCopy, lSample]) set(e, 'opacity', copyO.toFixed(3));
+  for (const e of lTop) set(e, 'opacity', copyO.toFixed(3));
   // Hand-off, never showing two texts at once: the landing card's text fades, the empty card swaps for the scene's
   // at the same box, grows to the scene card's height and corner, then the scene's text fades in. Reversed on the way back.
   const m = first ? easeIO(span(t, cue.morph, 700)) : 1 - easeIO(span(t, cue.unmorph, 700));       // 0 landing box, 1 scene box

@@ -1,7 +1,8 @@
 // Exports the SentinelDesk landing page (gdg-hackathon docs/demo/index.html) as data for the card: its stylesheet,
 // icon sprite and hero markup, laid out as a 1200 x 630 browser window shows it. The card draws the page's seeded sky
 // itself and renders this inside a shadow root, so the page's class names never meet the card's.
-// Run from this folder: GDG=<path to a gdg-hackathon checkout> node build-landing.mjs
+// Build from main (the current brand: ice-to-blue AI accents, navy AI mark), not an older branch.
+// Run from this folder: GDG=<path to a gdg-hackathon checkout on main> node build-landing.mjs
 import { readFileSync, writeFileSync } from 'node:fs';
 const root = (process.env.GDG ?? '').replace(/\/?$/, '/');
 const src = readFileSync(root + 'docs/demo/index.html', 'utf8');
