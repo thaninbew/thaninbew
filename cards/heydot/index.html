@@ -22,6 +22,12 @@
 .hero .bub{left:0;top:0;transform-origin:0 0;border-style:solid;border-width:0;border-image-slice:120 fill;border-image-width:42px;
   padding:19px 34px 23px;font-family:SFRounded,ui-rounded,system-ui,sans-serif;font-optical-sizing:auto;font-weight:600;font-size:34px;letter-spacing:-0.01em;white-space:nowrap;line-height:1.1;overflow:hidden}
 .hero .bub span{position:relative}
+/* The person's bubble carries both tails as layers: left while talking in the call, right on the banner (toward the
+   speaker dot). The right layer sits on top, so a crossfade never lets the body go translucent. */
+.hero .bub.two{border-image:none}
+.hero .bub.two::before,.hero .bub.two::after{content:"";position:absolute;inset:0;z-index:-1;border-style:solid;border-width:0;border-image-slice:120 fill;border-image-width:42px}
+.hero .bub.two::before{border-image-source:var(--tl);opacity:var(--ol,0)}
+.hero .bub.two::after{border-image-source:var(--tr);opacity:var(--or,1)}
 /* Desktop pieces */
 .hero .menubar{left:0;top:0;width:1200px;height:56px;background:rgba(255,255,255,.55);
   backdrop-filter:blur(24px) saturate(1.5);-webkit-backdrop-filter:blur(24px) saturate(1.5);box-shadow:inset 0 -1px 0 rgba(0,0,0,.06)}
@@ -423,10 +429,11 @@ const mic = el(hero, 'mic', null, null);
 const micDots = dotLayers(mic, 'ml', { shadowOpacity: 0.45, shadowDrop: 4, shadowBlur: 3.5 });
 
 // ---- Bubbles: "Hey Dot" (a person; neutral) and the dot's "Hey, what's up?" (theme colour) ----
-const bubbleSrc = fill => `url("data:image/svg+xml;base64,${btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256"><path transform="translate(256 0) scale(-1 1)" fill="${fill}" d="${L.phosphorPath}"/></svg>`)}")`;
-const bUser = el(hero, 'bub', null, null, '<span>Hey</span><span id="ell" style="position:absolute">…</span><span id="dt"> Dot</span>');
+// Phosphor's tail is bottom left; mirrored (the default) it is bottom right.
+const bubbleSrc = (fill, left = false) => `url("data:image/svg+xml;base64,${btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256"><path${left ? '' : ' transform="translate(256 0) scale(-1 1)"'} fill="${fill}" d="${L.phosphorPath}"/></svg>`)}")`;
+const bUser = el(hero, 'bub two', null, null, '<span>Hey</span><span id="ell" style="position:absolute">…</span><span id="dt"> Dot</span>');
 const bReply = el(hero, 'bub', null, null, 'Hey, what’s up?');
-bUser.style.borderImageSource = bubbleSrc('#ffffff');
+bUser.style.setProperty('--tr', bubbleSrc('#ffffff')); bUser.style.setProperty('--tl', bubbleSrc('#ffffff', true));
 
 // ---- Cursor ----
 const cursor = el(hero, 'cursor', null, null, `<svg viewBox="0 0 20 28"><path d="M1.5 1.5v21.2l5-4.9 3.3 7.6 3.6-1.5-3.2-7.5h7z" fill="#000" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>`);
@@ -454,10 +461,10 @@ function travel(a, b, p, lift) {
   const cx = lerp(a.x + a.s / 2, b.x + b.s / 2, p), cy = lerp(a.y + a.s / 2, b.y + b.s / 2, p) - lift * Math.sin(Math.PI * p);
   return { x: cx - s / 2, y: cy - s / 2, s };
 }
-// A bubble that pops from, or shrinks into, its tail corner (bottom right) by factor q.
-function bubbleAt(e, pos, w, h, q, op) {
+// A bubble that pops from, or shrinks into, its tail corner (bottom right, or bottom left) by factor q.
+function bubbleAt(e, pos, w, h, q, op, left = false) {
   set(e, 'opacity', op.toFixed(3));
-  place(e, pos.x + w * pos.s * (1 - q), pos.y + h * pos.s * (1 - q), pos.s * q);
+  place(e, pos.x + (left ? 0 : w * pos.s * (1 - q)), pos.y + h * pos.s * (1 - q), pos.s * q);
 }
 // Level bars: input level while each phrase is spoken.
 const SHAPE = [0.45, 0.8, 1, 0.7, 0.5];
@@ -603,16 +610,22 @@ window.__frame = ms => {
   set(dt, 'opacity', (t >= cue.hey && t < cue.heyDot + 320 ? easeOut(span(t, cue.heyDot + 120, 200)) : 1).toFixed(3));
   set(bUser, 'color', T.otherText);
   set(bUser, 'filter', `drop-shadow(0 12px 20px ${T.otherShadow})`);
+  // Tail: right on the banner (toward the speaker dot), left while the person talks in the call (they speak from the
+  // left). Flying home, the right tail fades in over the left one, then the left one fades out underneath.
+  let tailR = 1, tailL = 0;
   if (t < cue.hey) {
     const p = easeIn(span(t, cue.leave, 300));
     bubbleAt(bUser, BUB_USER_B, W2, BH, 1 - 0.15 * p, 1 - p);
   } else if (t < cue.back + 350) {
     const p = easeBack(span(t, cue.hey, 340));
-    bubbleAt(bUser, BUB_USER_TALK, ww, BH, 0.82 + 0.18 * p, clamp01(span(t, cue.hey, 100)));
+    tailR = 0; tailL = 1;
+    bubbleAt(bUser, BUB_USER_TALK, ww, BH, 0.82 + 0.18 * p, clamp01(span(t, cue.hey, 100)), true);
   } else {
     const p = easeIO(span(t, cue.back + 350, 850));
+    tailR = smooth(clamp01((p - 0.3) / 0.2)); tailL = 1 - smooth(clamp01((p - 0.5) / 0.2));
     bubbleAt(bUser, { x: lerp(BUB_USER_TALK.x, BUB_USER_B.x, p), y: lerp(BUB_USER_TALK.y, BUB_USER_B.y, p) - 40 * Math.sin(Math.PI * p), s: lerp(BUB_USER_TALK.s, BUB_USER_B.s, p) }, W2, BH, 1, 1);
   }
+  setVar(bUser, '--or', tailR.toFixed(3)); setVar(bUser, '--ol', tailL.toFixed(3));
 
   // ---- The dot's reply ----
   const rf = T.bubFill;
