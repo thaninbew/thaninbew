@@ -2,28 +2,30 @@
 <html><head><meta charset="utf-8"><title>SentinelDesk card</title>
 <link rel="stylesheet" href="../_shell/card.css">
 <style>
-/* SentinelDesk scene. Tokens, copy and easing from gdg-hackathon docs/demo/index.html,
-   docs/demo/sd-motion.css and web/app/globals.css (Dusk, light). Sample data only.
-   Every animation is infinite and runs for --loop, so any frame can be seeked. */
+/* SentinelDesk, 11 s loop. Opens and seams on the real landing page (landing.js, built from gdg-hackathon
+   docs/demo/index.html), scrolls to its product cards, and the landing's Grounded reply card becomes the scene's.
+   Tokens, copy and easing from the same page and web/app/globals.css (Dusk, light). Sample data only.
+   Everything that moves is a pure function of time in window.__frame (no CSS animation, transitions or timers). */
 @font-face{font-family:Manrope;src:url(fonts/manrope-latin.woff2) format("woff2");font-weight:200 800;font-display:block}
 @font-face{font-family:"Google Sans Code";src:url(fonts/gsanscode-latin.woff2) format("woff2");font-weight:300 800;font-display:block}
 .hero{
-  --loop:12000ms;
   --fg:#16161f;--muted:#f1f1f6;--mfg:#5b5e70;--line:#e3e3ec;
   --info-t:#eceffe;--info-f:#2e45c4;--crit-t:#fdecec;--crit-f:#b42323;--ok-t:#e5f4eb;--ok-f:#146c3c;
-  --ai:linear-gradient(90deg,#cfe0ff,#3478f6);
+  --ai:linear-gradient(90deg,#f0644a,#d9468f 35%,#8a5cf5 70%,#3478f6);
   --ease:cubic-bezier(.2,0,0,1);
   --mono:"Google Sans Code",ui-monospace,SFMono-Regular,Menlo,monospace;
   font:22px/1.5 Manrope,system-ui,sans-serif;color:var(--fg);background:#060a20}
-.hero *{animation-duration:var(--loop);animation-iteration-count:infinite;animation-timing-function:var(--ease);animation-fill-mode:both}
 .hero svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .hero .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 
-/* Sky: static seeded starfield (drawn once), progressive blur and fade, as on the landing hero */
-.sky{position:absolute;inset:0;overflow:hidden}
+/* Sky: the landing hero's, exactly (680 px tall in a 630 px window), fixed while the page scrolls over it */
+.sky{position:absolute;left:0;top:0;width:1200px;height:680px;overflow:hidden;background:#060a20}
 .sky canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.sky .haze{position:absolute;inset:0;backdrop-filter:blur(18px);-webkit-mask-image:linear-gradient(to bottom,transparent 40%,#000 75%);mask-image:linear-gradient(to bottom,transparent 40%,#000 75%)}
-.sky .fade{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(255,255,255,0) 52%,rgba(236,242,255,.38) 74%,rgba(246,248,255,.82) 100%)}
+.sky .haze{position:absolute;inset:0;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);-webkit-mask-image:linear-gradient(to bottom,transparent 45%,#000 68%);mask-image:linear-gradient(to bottom,transparent 45%,#000 68%)}
+.sky .fade{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(255,255,255,0) 50%,rgba(236,242,255,.45) 63%,rgba(255,255,255,.9) 78%,#fff 88%)}
+/* Stacking for the hand-off: the travelling card (landing's, then the scene's) passes over the inbox. */
+#land{position:absolute;left:0;top:0;width:1200px;height:1000px;z-index:1}
+.reply{z-index:2}
 
 /* Headline: landing section copy, one line each, crossfaded per beat */
 .heads{position:absolute;left:0;right:0;top:36px;height:66px}
@@ -34,7 +36,7 @@
 .ai{overflow:hidden;border-radius:22px}
 .ai .strip{position:absolute;inset:0 0 auto 0;height:4px;background:var(--ai);background-size:100% 100%}
 .aihead{display:flex;align-items:center;gap:12px;margin:0;font-weight:600}
-.aimark{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:9px;background:#1e2f73;color:#fff;font-size:19px}
+.aimark{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:9px;background:var(--ai);color:#fff;font-size:19px}
 .stack{display:grid}.stack>*{grid-area:1/1}
 .badge{display:inline-flex;align-items:center;gap:7px;font-size:18px;line-height:1;font-weight:600;border-radius:9px;padding:7px 12px;white-space:nowrap}
 .badge svg.i{font-size:19px}
@@ -78,47 +80,6 @@
 .ghost{position:absolute;left:798px;top:228.8px;margin:0;white-space:nowrap;transform-origin:0 0;font-size:15.5px;line-height:1.5;font-weight:500;color:var(--mfg);z-index:3;opacity:0}
 .nid{font-weight:500}
 
-/* ---- Timeline (generated: see the beat list in the report) ---- */
-/*ANIM*/
-@keyframes h-a{0%{opacity:1;transform:translateY(0)}14.167%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}15.833%{opacity:0;transform:translateY(0)}66.242%{opacity:0;transform:translateY(8px)}66.25%{opacity:0;transform:translateY(8px)}68.75%{opacity:1;transform:translateY(0)}100%{opacity:1;transform:translateY(0)}}
-.h-a{animation-name:h-a}
-@keyframes h-b{0%{opacity:0;transform:translateY(8px)}15.408%{opacity:0;transform:translateY(8px)}15.417%{opacity:0;transform:translateY(8px)}17.917%{opacity:1;transform:translateY(0)}65%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}66.667%{opacity:0;transform:translateY(0)}100%{opacity:0;transform:translateY(0)}}
-.h-b{animation-name:h-b}
-@keyframes id-a{0%{opacity:1;transform:translateY(0)}14.167%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}15.833%{opacity:0;transform:translateY(0)}67.492%{opacity:0;transform:translateY(0)}67.5%{opacity:0;transform:translateY(0)}69.167%{opacity:1;transform:translateY(0)}100%{opacity:1;transform:translateY(0)}}
-.id-a{animation-name:id-a}
-@keyframes id-b{0%{opacity:0;transform:translateY(0)}15.825%{opacity:0;transform:translateY(0)}15.833%{opacity:0;transform:translateY(0)}17.5%{opacity:1;transform:translateY(0)}65%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}66.667%{opacity:0;transform:translateY(0)}100%{opacity:0;transform:translateY(0)}}
-.id-b{animation-name:id-b}
-@keyframes ask-a{0%{opacity:1;transform:translateY(0)}14.167%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}15.833%{opacity:0;transform:translateY(0)}67.492%{opacity:0;transform:translateY(8px)}67.5%{opacity:0;transform:translateY(8px)}69.167%{opacity:1;transform:translateY(0)}100%{opacity:1;transform:translateY(0)}}
-.ask-a{animation-name:ask-a}
-@keyframes ask-b{0%{opacity:0;transform:translateY(8px)}15.825%{opacity:0;transform:translateY(8px)}15.833%{opacity:0;transform:translateY(8px)}17.5%{opacity:1;transform:translateY(0)}65%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}66.667%{opacity:0;transform:translateY(0)}100%{opacity:0;transform:translateY(0)}}
-.ask-b{animation-name:ask-b}
-@keyframes s1{0%{opacity:1;transform:translateY(0)}14.167%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}15.833%{opacity:0;transform:translateY(0)}77.908%{opacity:0;transform:translateY(0)}77.917%{opacity:0;transform:translateY(0)}79.583%{opacity:1;transform:translateY(0)}100%{opacity:1;transform:translateY(0)}}
-.s1{animation-name:s1}
-@keyframes s2{0%{opacity:1;transform:translateY(0)}14.167%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}15.833%{opacity:0;transform:translateY(0)}82.492%{opacity:0;transform:translateY(0)}82.5%{opacity:0;transform:translateY(0)}84.167%{opacity:1;transform:translateY(0)}100%{opacity:1;transform:translateY(0)}}
-.s2{animation-name:s2}
-@keyframes skel{0%{opacity:0;transform:translateY(0)}69.992%{opacity:0;transform:translateY(0)}70%{opacity:0;transform:translateY(0)}71.667%{opacity:1;transform:translateY(0)}76.667%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}77.917%{opacity:0;transform:translateY(0)}100%{opacity:0;transform:translateY(0)}}
-.skel{animation-name:skel}
-@keyframes nodraft{0%{opacity:0;transform:translateY(0)}20.825%{opacity:0;transform:translateY(0)}20.833%{opacity:0;transform:translateY(0)}22.5%{opacity:1;transform:translateY(0)}65%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}66.667%{opacity:0;transform:translateY(0)}100%{opacity:0;transform:translateY(0)}}
-.none{animation-name:nodraft}
-@keyframes ok{0%{opacity:1;transform:translateY(0)}14.167%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}15.833%{opacity:0;transform:translateY(0)}87.492%{opacity:0;transform:translateY(0)}87.5%{opacity:0;transform:translateY(0)}89.167%{opacity:1;transform:translateY(0)}100%{opacity:1;transform:translateY(0)}}
-.ok{animation-name:ok}
-@keyframes esc{0%{opacity:0;transform:translateY(0)}20.825%{opacity:0;transform:translateY(0)}20.833%{opacity:0;transform:translateY(0)}22.5%{opacity:1;transform:translateY(0)}65%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}66.667%{opacity:0;transform:translateY(0)}100%{opacity:0;transform:translateY(0)}}
-.esc{animation-name:esc}
-@keyframes sweep{0%{background-size:100% 100%;background-position:0% 0}69.992%{background-size:100% 100%;background-position:0% 0}70%{background-size:200% 100%;background-position:0% 0}84.167%{background-size:200% 100%;background-position:100% 0}84.175%{background-size:100% 100%;background-position:0% 0}100%{background-size:100% 100%;background-position:0% 0}}
-.reply .strip{animation-name:sweep}
-@keyframes rows{0%{transform:translateY(0)}25%{transform:translateY(0)}26.667%{transform:translateY(68px)}66.667%{transform:translateY(68px)}68.333%{transform:translateY(0)}100%{transform:translateY(0)}}
-.rows{animation-name:rows}
-@keyframes nrow{0%{opacity:0;transform:translateY(0)}28.325%{opacity:0;transform:translateY(0)}28.333%{opacity:0;transform:translateY(0)}30%{opacity:1;transform:translateY(0)}65%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}66.667%{opacity:0;transform:translateY(0)}100%{opacity:0;transform:translateY(0)}}
-.nrow{animation-name:nrow}
-@keyframes nid{0%{opacity:0}29.325%{opacity:0}29.333%{opacity:1}100%{opacity:1}}
-.nid{animation-name:nid}
-@keyframes tint{0%{opacity:0}29.325%{opacity:0}29.333%{opacity:1}36.833%{opacity:0}100%{opacity:0}}
-.tint{animation-name:tint}
-@keyframes ghost{0%{opacity:0;transform:translate(-269.6px,-66.8px) scale(1.2258)}26.658%{opacity:0;transform:translate(-269.6px,-66.8px) scale(1.2258)}26.667%{opacity:1;transform:translate(-269.6px,-66.8px) scale(1.2258)}29.333%{opacity:1;transform:translate(0,0) scale(1)}29.342%{opacity:0;transform:translate(-269.6px,-66.8px) scale(1.2258)}100%{opacity:0;transform:translate(-269.6px,-66.8px) scale(1.2258)}}
-.ghost{animation-name:ghost}
-@keyframes brief{0%{opacity:0;transform:translateY(8px)}38.325%{opacity:0;transform:translateY(8px)}38.333%{opacity:0;transform:translateY(8px)}40%{opacity:1;transform:translateY(0)}65%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}66.667%{opacity:0;transform:translateY(0)}100%{opacity:0;transform:translateY(0)}}
-.brief{animation-name:brief}
-/*END*/
 </style></head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -132,8 +93,9 @@
   </defs>
 </svg>
 <div class="card">
-  <section class="hero" aria-label="SentinelDesk drafts a cited reply to a routine ticket, then sends an outage ticket to an engineer with no reply">
-    <div class="sky" aria-hidden="true"><canvas id="stars" width="1200" height="630"></canvas><div class="haze"></div><div class="fade"></div></div>
+  <section class="hero" aria-label="The SentinelDesk landing page scrolls to its product; an outage ticket goes straight to an engineer with a handoff brief, then a routine ticket gets a reply cited to past cases">
+    <div class="sky" aria-hidden="true"><canvas id="stars" width="1200" height="680"></canvas><div class="haze"></div><div class="fade"></div></div>
+    <div id="land" aria-hidden="true"></div>
 
     <div class="heads">
       <h1 class="h-a">Answers that cite their source.</h1>
@@ -230,4 +192,128 @@
   for(var k=0;k<Math.round(area/42000);k++)star(R()*W,Math.pow(R(),1.6)*H*.7,true);
 })();
 </script>
+<script src="landing.js"></script>
+<script>
+// ======================= Landing page, in a shadow root =======================
+const hero = document.querySelector('.hero');
+const landHost = document.getElementById('land');
+const shadow = landHost.attachShadow({ mode: 'open' });
+shadow.innerHTML = `<style>${LANDING.css}</style><div class="page">${LANDING.sprite}${LANDING.header}</div>`;
+const $L = s => shadow.querySelector(s), $$L = s => [...shadow.querySelectorAll(s)];
+const lNav = $L('.nav'), lCopy = $L('.copy'), lSample = $L('.stagewrap > .sample'), lCard = $L('.stage .center'), lSides = $$L('.stage .side');
+lCard.style.transformOrigin = '0 0';
+
+// ======================= Scene elements =======================
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const reply = $('.reply'), inbox = $('.inbox'), brief = $('.brief'), ghost = $('.ghost'), rows = $('.rows'), strip = reply.querySelector('.strip');
+reply.style.transformOrigin = '0 0';
+
+// ======================= Timing =======================
+const LOOP = 11000, S = 424;   // S: the scroll that puts the landing's reply card at the scene card's top (556 -> 132)
+const cue = {
+  scroll: 700,      // the landing scrolls down (800 ms)
+  morph: 1500,      // the landing's Grounded reply card becomes the scene's (700 ms)
+  toB: 2700,        // the routine reply leaves; an outage ticket arrives
+  toA: 5700,        // back to a routine ticket, drafted live
+  unmorph: 8600,    // the scene's card returns into the landing (700 ms)
+  scrollUp: 9300,   // the landing scrolls back to the hero (800 ms) and holds to the seam
+};
+function bezier(x1, y1, x2, y2) {   // CSS cubic-bezier as a function of progress
+  const f = (t, a, b) => 3 * a * t * (1 - t) ** 2 + 3 * b * t * t * (1 - t) + t ** 3;
+  return p => {
+    if (p <= 0) return 0; if (p >= 1) return 1;
+    let lo = 0, hi = 1; for (let i = 0; i < 30; i++) { const m = (lo + hi) / 2; if (f(m, x1, x2) < p) lo = m; else hi = m; }
+    return f((lo + hi) / 2, y1, y2);
+  };
+}
+const EASE = bezier(.2, 0, 0, 1), EXIT = bezier(.3, 0, 1, 1);
+const clamp01 = x => Math.max(0, Math.min(1, x));
+const span = (t, a, d) => clamp01((t - a) / d);
+const easeIO = p => p < 0.5 ? 4 * p * p * p : 1 - (-2 * p + 2) ** 3 / 2;
+const set = (e, k, v) => { if (e.__s?.[k] !== v) { (e.__s ??= {})[k] = v; e.style[k] = v; } };
+const show = (e, o, tf = '') => { set(e, 'opacity', o.toFixed(3)); set(e, 'visibility', o > 0 ? 'visible' : 'hidden'); set(e, 'transform', tf || 'none'); };
+
+// A beat element's state: entries rise 8 px and fade in with the product's ease; exits fade with EXIT.
+function beat(t, ins, outs, { rise = true, on = false } = {}) {
+  const ev = [...ins.map(([a, d]) => [a, d, 1]), ...outs.map(([a, d]) => [a, d, 0])].sort((x, y) => x[0] - y[0]);
+  let o = on ? 1 : 0, y = 0;
+  for (const [a, d, k] of ev) {
+    if (t < a) break;
+    const p = clamp01((t - a) / d);
+    if (k) { const e = EASE(p); o = e; y = rise ? 8 * (1 - e) : 0; } else { o = 1 - EXIT(p); y = 0; }
+  }
+  return { o, y };
+}
+const b = cue.toB, a = cue.toA, OUT = [b, 200], BACK = [a, 200];
+const BEATS = [
+  // Routine reply: complete when the card arrives from the landing, then drafted live after the outage.
+  ['.h-a', [[cue.morph + 400, 300], [a + 150, 300]], [OUT, [cue.unmorph, 200]], {}],
+  ['.id-a', [[a + 250, 200]], [OUT], { rise: false, on: true }],
+  ['.ask-a', [[a + 250, 200]], [OUT], { on: true }],
+  ['.skel', [[a + 450, 200]], [[a + 1050, 150]], { rise: false }],
+  ['.s1', [[a + 1150, 200]], [OUT], { rise: false, on: true }],
+  ['.s2', [[a + 1550, 200]], [OUT], { rise: false, on: true }],
+  ['.ok', [[a + 1950, 200]], [OUT], { rise: false, on: true }],
+  // Outage: no draft, escalated, and handed to an engineer with a brief.
+  ['.h-b', [[b + 150, 300]], [BACK], {}],
+  ['.id-b', [[b + 200, 200]], [BACK], { rise: false }],
+  ['.ask-b', [[b + 200, 200]], [BACK], {}],
+  ['.none', [[b + 600, 200]], [BACK], { rise: false }],
+  ['.esc', [[b + 600, 200]], [BACK], { rise: false }],
+  ['.nrow', [[b + 1300, 200]], [BACK], { rise: false }],
+  ['.brief', [[b + 1900, 200]], [BACK], {}],
+].map(([sel, ins, outs, opt]) => [$$(sel), ins, outs, opt]);
+const ROOM = b + 900, FLY = [b + 1100, 320], SWEEP = [a + 450, 1250];
+
+// The hand-off: the landing card's box at scroll S, and the scene card's box. One uniform scale maps one to the other.
+const hr = hero.getBoundingClientRect(), lr = lCard.getBoundingClientRect(), rr = reply.getBoundingClientRect();
+const LB = { x: lr.left - hr.left, y: lr.top - hr.top - S, w: lr.width, h: lr.height }, RB = { x: rr.left - hr.left, y: rr.top - hr.top, w: rr.width, h: rr.height };
+const K = RB.w / LB.w;
+const lKids = [...lCard.children], rKids = [...reply.children].filter(e => !e.classList.contains('strip'));
+
+window.__frame = ms => {
+  const t = ((ms % LOOP) + LOOP) % LOOP;
+  const first = t < cue.unmorph;   // the way in, or the way back
+
+  // ---- Landing: scroll down to the product, hand the card over, and the reverse ----
+  const sc = easeIO(span(t, cue.scroll, 800)) * (1 - easeIO(span(t, cue.scrollUp, 800)));
+  set(landHost, 'transform', `translateY(${(-S * sc).toFixed(2)}px)`);
+  const copyO = first ? 1 - span(t, cue.scroll + 300, 450) : span(t, cue.scrollUp + 200, 500);
+  for (const e of [lNav, lCopy, lSample]) set(e, 'opacity', copyO.toFixed(3));
+  // Hand-off, never showing two texts at once: the landing card's text fades, the empty card swaps for the scene's
+  // at the same box, grows to the scene card's height and corner, then the scene's text fades in. Reversed on the way back.
+  const m = first ? easeIO(span(t, cue.morph, 700)) : 1 - easeIO(span(t, cue.unmorph, 700));       // 0 landing box, 1 scene box
+  const ls = 1 + (K - 1) * m, swapped = m >= 0.4, g = easeIO(span(m, 0.4, 0.6));
+  show(lCard, swapped ? 0 : 1, `translate(${((RB.x - LB.x) * m).toFixed(2)}px,${((RB.y - LB.y) * m).toFixed(2)}px) scale(${ls.toFixed(4)})`);
+  for (const e of lKids) set(e, 'opacity', (1 - span(m, 0.05, 0.3)).toFixed(3));
+  show(reply, swapped ? 1 : 0, m >= 1 ? '' : `translate(${((LB.x - RB.x) * (1 - m)).toFixed(2)}px,${((LB.y - RB.y) * (1 - m)).toFixed(2)}px) scale(${(ls / K).toFixed(4)})`);
+  set(reply, 'height', m >= 1 ? '' : `${(LB.h * K + (RB.h - LB.h * K) * g).toFixed(2)}px`);
+  set(reply, 'borderRadius', m >= 1 ? '' : `${(12 * K + (22 - 12 * K) * g).toFixed(2)}px`);
+  for (const e of rKids) set(e, 'opacity', span(m, 0.55, 0.4).toFixed(3));
+  const sideO = first ? 1 - span(t, cue.morph, 300) : span(t, cue.unmorph + 400, 300);
+  for (const e of lSides) show(e, sideO);
+  const ib = first ? EASE(span(t, cue.morph + 250, 450)) : 1 - EXIT(span(t, cue.unmorph + 50, 300));
+  show(inbox, ib, ib >= 1 ? '' : `translateX(${(40 * (1 - ib)).toFixed(2)}px)`);
+
+  // ---- Beats ----
+  for (const [els, ins, outs, opt] of BEATS) {
+    const st = beat(t, ins, outs, opt);
+    for (const e of els) show(e, st.o, st.y ? `translateY(${st.y.toFixed(2)}px)` : '');
+  }
+  // Drafting: the AI strip sweeps while the reply is written.
+  const sw = t >= SWEEP[0] && t < SWEEP[0] + SWEEP[1];
+  set(strip, 'backgroundSize', sw ? '200% 100%' : '100% 100%');
+  set(strip, 'backgroundPosition', sw ? `${(100 * span(t, SWEEP[0], SWEEP[1])).toFixed(2)}% 0` : '0% 0');
+  // Engineer inbox: the list makes room, the ticket ID flies over (320 ms), and the new row tints once.
+  const room = t < a ? EASE(span(t, ROOM, 200)) : 1 - EASE(span(t, a, 200));
+  set(rows, 'transform', `translateY(${(68 * room).toFixed(2)}px)`);
+  const f = EASE(span(t, FLY[0], FLY[1])), flying = t >= FLY[0] && t < FLY[0] + FLY[1], landed = t >= FLY[0] + FLY[1] && t < a + 200;
+  const G = { x: -269.6, y: -66.8, s: 1.2258 };
+  show(ghost, flying ? 1 : 0, `translate(${(G.x * (1 - f)).toFixed(2)}px,${(G.y * (1 - f)).toFixed(2)}px) scale(${(G.s + (1 - G.s) * f).toFixed(4)})`);
+  set($('.nid'), 'opacity', landed ? '1' : '0');
+  set($('.tint'), 'opacity', landed ? (1 - span(t, FLY[0] + FLY[1], 700)).toFixed(3) : '0');
+};
+window.__frame(0);
+</script>
 </body></html>
+
