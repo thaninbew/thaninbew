@@ -1,6 +1,6 @@
 // Usage: node capture.mjs <card.html> <out.webp> <loopMs> [fps=25] [quality=85]
-// Shipped settings (all under 5 MB): profile cards SCALE=0.6667, fps 20, SentinelDesk q80, HeyDot q68;
-// HeyDot hero CLIP=1200x630, fps 20, q75.
+// Shipped settings: profile cards SCALE=0.6667, fps 20, SentinelDesk q80 (2.6 MB), HeyDot q68 (5.3 MB; lower q saves little);
+// HeyDot hero CLIP=1200x630, fps 20, q75 (4.8 MB; HeyDot's README wants it under about 5 MB).
 // SCALE=0.75 renders at that device scale (900x737 for the card) to keep keyframe-only files small.
 // EXTRA_CSS=<file> injects a stylesheet (e.g. _shell/hero-only.css); CLIP=1200x630 crops every frame from the top-left.
 // KEEP_FRAMES=<dir> copies every frame PNG there for review.
