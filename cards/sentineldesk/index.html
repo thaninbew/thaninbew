@@ -1,0 +1,233 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>SentinelDesk card</title>
+<link rel="stylesheet" href="../_shell/card.css">
+<style>
+/* SentinelDesk scene. Tokens, copy and easing from gdg-hackathon docs/demo/index.html,
+   docs/demo/sd-motion.css and web/app/globals.css (Dusk, light). Sample data only.
+   Every animation is infinite and runs for --loop, so any frame can be seeked. */
+@font-face{font-family:Manrope;src:url(fonts/manrope-latin.woff2) format("woff2");font-weight:200 800;font-display:block}
+@font-face{font-family:"Google Sans Code";src:url(fonts/gsanscode-latin.woff2) format("woff2");font-weight:300 800;font-display:block}
+.hero{
+  --loop:12000ms;
+  --fg:#16161f;--muted:#f1f1f6;--mfg:#5b5e70;--line:#e3e3ec;
+  --info-t:#eceffe;--info-f:#2e45c4;--crit-t:#fdecec;--crit-f:#b42323;--ok-t:#e5f4eb;--ok-f:#146c3c;
+  --ai:linear-gradient(90deg,#cfe0ff,#3478f6);
+  --ease:cubic-bezier(.2,0,0,1);
+  --mono:"Google Sans Code",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font:22px/1.5 Manrope,system-ui,sans-serif;color:var(--fg);background:#060a20}
+.hero *{animation-duration:var(--loop);animation-iteration-count:infinite;animation-timing-function:var(--ease);animation-fill-mode:both}
+.hero svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hero .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* Sky: static seeded starfield (drawn once), progressive blur and fade, as on the landing hero */
+.sky{position:absolute;inset:0;overflow:hidden}
+.sky canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.sky .haze{position:absolute;inset:0;backdrop-filter:blur(18px);-webkit-mask-image:linear-gradient(to bottom,transparent 40%,#000 75%);mask-image:linear-gradient(to bottom,transparent 40%,#000 75%)}
+.sky .fade{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(255,255,255,0) 52%,rgba(236,242,255,.38) 74%,rgba(246,248,255,.82) 100%)}
+
+/* Headline: landing section copy, one line each, crossfaded per beat */
+.heads{position:absolute;left:0;right:0;top:36px;height:66px}
+.heads h1{position:absolute;inset:0;margin:0;text-align:center;color:#fff;font-size:52px;line-height:66px;font-weight:600;letter-spacing:-.03em;text-shadow:0 2px 24px rgba(3,5,26,.45)}
+
+/* Product surfaces */
+.card-s{position:absolute;background:#fff;border:1.5px solid var(--line);border-radius:18px;box-shadow:0 2px 3px rgba(22,22,31,.05),0 26px 56px -26px rgba(22,30,80,.42)}
+.ai{overflow:hidden;border-radius:22px}
+.ai .strip{position:absolute;inset:0 0 auto 0;height:4px;background:var(--ai);background-size:100% 100%}
+.aihead{display:flex;align-items:center;gap:12px;margin:0;font-weight:600}
+.aimark{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:9px;background:#1e2f73;color:#fff;font-size:19px}
+.stack{display:grid}.stack>*{grid-area:1/1}
+.badge{display:inline-flex;align-items:center;gap:7px;font-size:18px;line-height:1;font-weight:600;border-radius:9px;padding:7px 12px;white-space:nowrap}
+.badge svg.i{font-size:19px}
+.b-ok{background:var(--ok-t);color:var(--ok-f)}.b-crit{background:var(--crit-t);color:var(--crit-f)}
+
+/* Left: grounded reply */
+.reply{left:60px;top:132px;width:600px;padding:26px 28px 24px}
+.reply .aihead{font-size:23px}
+.reply .tid{margin-left:auto;font-size:19px;font-weight:500;color:var(--mfg)}
+.ask{margin:20px 0 0;background:var(--muted);border-radius:18px 18px 18px 5px;padding:14px 18px;font-size:20px;line-height:1.5;justify-self:start}
+.body{margin-top:18px;min-height:150px}
+.text{margin:0;font-size:22px;line-height:1.62}
+.cite{display:inline-flex;align-items:center;gap:4px;font:500 15.5px/1 var(--mono);color:var(--info-f);background:var(--info-t);border-radius:6px;padding:5px 7px;vertical-align:2px;margin-left:3px}
+.cite svg.i{font-size:15px}
+.skel{display:flex;flex-direction:column;gap:17px;padding-top:12px}
+.skel i{display:block;height:17px;border-radius:9px;background:var(--muted)}
+.none{margin:0;padding-top:4px;font-size:20px;color:var(--mfg)}
+.foot{display:grid;justify-items:start;align-items:center;margin-top:20px;padding-top:18px;border-top:1.5px solid var(--line)}
+
+/* Right: engineer inbox and handoff brief */
+.inbox{left:690px;top:132px;width:450px;padding:10px 0 8px}
+.lbl{display:flex;align-items:center;gap:10px;margin:0;padding:12px 26px 10px;font-size:18px;color:var(--mfg)}
+.lbl svg.i{font-size:20px}
+.list{position:relative;height:204px;overflow:hidden}
+.rows{position:relative}
+.irow{position:relative;height:68px;padding:0 26px;display:flex;flex-direction:column;justify-content:center;gap:5px;border-top:1.5px solid var(--line)}
+.irow .t{font-size:19px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.irow .m{display:flex;align-items:center;gap:10px;font-size:15.5px;color:var(--mfg)}
+.irow.q .t{color:var(--mfg)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--line);flex:none}
+.irow.new{position:absolute;left:0;right:0;top:-68px;border-top:0}
+.irow.new .t{font-weight:600;color:var(--fg)}
+.irow.new .badge{font-size:15px;padding:4px 9px;border-radius:7px;gap:5px}
+.irow.new .badge svg.i{font-size:15px}
+.tint{position:absolute;inset:0;background:var(--info-t);opacity:0}
+.rowc{position:relative;display:contents}
+.brief{left:690px;top:421px;width:450px;padding:22px 26px 22px}
+.brief .aihead{font-size:19px}
+.brief .aimark{width:30px;height:30px;font-size:17px;border-radius:8px}
+.brief p.txt{margin:12px 0 0;font-size:17px;line-height:1.55}
+.ghost{position:absolute;left:798px;top:228.8px;margin:0;white-space:nowrap;transform-origin:0 0;font-size:15.5px;line-height:1.5;font-weight:500;color:var(--mfg);z-index:3;opacity:0}
+.nid{font-weight:500}
+
+/* ---- Timeline (generated: see the beat list in the report) ---- */
+/*ANIM*/
+@keyframes h-a{0%{opacity:1;transform:translateY(0)}14.167%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}15.833%{opacity:0;transform:translateY(0)}66.242%{opacity:0;transform:translateY(8px)}66.25%{opacity:0;transform:translateY(8px)}68.75%{opacity:1;transform:translateY(0)}100%{opacity:1;transform:translateY(0)}}
+.h-a{animation-name:h-a}
+@keyframes h-b{0%{opacity:0;transform:translateY(8px)}15.408%{opacity:0;transform:translateY(8px)}15.417%{opacity:0;transform:translateY(8px)}17.917%{opacity:1;transform:translateY(0)}65%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}66.667%{opacity:0;transform:translateY(0)}100%{opacity:0;transform:translateY(0)}}
+.h-b{animation-name:h-b}
+@keyframes id-a{0%{opacity:1;transform:translateY(0)}14.167%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}15.833%{opacity:0;transform:translateY(0)}67.492%{opacity:0;transform:translateY(0)}67.5%{opacity:0;transform:translateY(0)}69.167%{opacity:1;transform:translateY(0)}100%{opacity:1;transform:translateY(0)}}
+.id-a{animation-name:id-a}
+@keyframes id-b{0%{opacity:0;transform:translateY(0)}15.825%{opacity:0;transform:translateY(0)}15.833%{opacity:0;transform:translateY(0)}17.5%{opacity:1;transform:translateY(0)}65%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}66.667%{opacity:0;transform:translateY(0)}100%{opacity:0;transform:translateY(0)}}
+.id-b{animation-name:id-b}
+@keyframes ask-a{0%{opacity:1;transform:translateY(0)}14.167%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}15.833%{opacity:0;transform:translateY(0)}67.492%{opacity:0;transform:translateY(8px)}67.5%{opacity:0;transform:translateY(8px)}69.167%{opacity:1;transform:translateY(0)}100%{opacity:1;transform:translateY(0)}}
+.ask-a{animation-name:ask-a}
+@keyframes ask-b{0%{opacity:0;transform:translateY(8px)}15.825%{opacity:0;transform:translateY(8px)}15.833%{opacity:0;transform:translateY(8px)}17.5%{opacity:1;transform:translateY(0)}65%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}66.667%{opacity:0;transform:translateY(0)}100%{opacity:0;transform:translateY(0)}}
+.ask-b{animation-name:ask-b}
+@keyframes s1{0%{opacity:1;transform:translateY(0)}14.167%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}15.833%{opacity:0;transform:translateY(0)}77.908%{opacity:0;transform:translateY(0)}77.917%{opacity:0;transform:translateY(0)}79.583%{opacity:1;transform:translateY(0)}100%{opacity:1;transform:translateY(0)}}
+.s1{animation-name:s1}
+@keyframes s2{0%{opacity:1;transform:translateY(0)}14.167%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}15.833%{opacity:0;transform:translateY(0)}82.492%{opacity:0;transform:translateY(0)}82.5%{opacity:0;transform:translateY(0)}84.167%{opacity:1;transform:translateY(0)}100%{opacity:1;transform:translateY(0)}}
+.s2{animation-name:s2}
+@keyframes skel{0%{opacity:0;transform:translateY(0)}69.992%{opacity:0;transform:translateY(0)}70%{opacity:0;transform:translateY(0)}71.667%{opacity:1;transform:translateY(0)}76.667%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}77.917%{opacity:0;transform:translateY(0)}100%{opacity:0;transform:translateY(0)}}
+.skel{animation-name:skel}
+@keyframes nodraft{0%{opacity:0;transform:translateY(0)}20.825%{opacity:0;transform:translateY(0)}20.833%{opacity:0;transform:translateY(0)}22.5%{opacity:1;transform:translateY(0)}65%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}66.667%{opacity:0;transform:translateY(0)}100%{opacity:0;transform:translateY(0)}}
+.none{animation-name:nodraft}
+@keyframes ok{0%{opacity:1;transform:translateY(0)}14.167%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}15.833%{opacity:0;transform:translateY(0)}87.492%{opacity:0;transform:translateY(0)}87.5%{opacity:0;transform:translateY(0)}89.167%{opacity:1;transform:translateY(0)}100%{opacity:1;transform:translateY(0)}}
+.ok{animation-name:ok}
+@keyframes esc{0%{opacity:0;transform:translateY(0)}20.825%{opacity:0;transform:translateY(0)}20.833%{opacity:0;transform:translateY(0)}22.5%{opacity:1;transform:translateY(0)}65%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}66.667%{opacity:0;transform:translateY(0)}100%{opacity:0;transform:translateY(0)}}
+.esc{animation-name:esc}
+@keyframes sweep{0%{background-size:100% 100%;background-position:0% 0}69.992%{background-size:100% 100%;background-position:0% 0}70%{background-size:200% 100%;background-position:0% 0}84.167%{background-size:200% 100%;background-position:100% 0}84.175%{background-size:100% 100%;background-position:0% 0}100%{background-size:100% 100%;background-position:0% 0}}
+.reply .strip{animation-name:sweep}
+@keyframes rows{0%{transform:translateY(0)}25%{transform:translateY(0)}26.667%{transform:translateY(68px)}66.667%{transform:translateY(68px)}68.333%{transform:translateY(0)}100%{transform:translateY(0)}}
+.rows{animation-name:rows}
+@keyframes nrow{0%{opacity:0;transform:translateY(0)}28.325%{opacity:0;transform:translateY(0)}28.333%{opacity:0;transform:translateY(0)}30%{opacity:1;transform:translateY(0)}65%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}66.667%{opacity:0;transform:translateY(0)}100%{opacity:0;transform:translateY(0)}}
+.nrow{animation-name:nrow}
+@keyframes nid{0%{opacity:0}29.325%{opacity:0}29.333%{opacity:1}100%{opacity:1}}
+.nid{animation-name:nid}
+@keyframes tint{0%{opacity:0}29.325%{opacity:0}29.333%{opacity:1}36.833%{opacity:0}100%{opacity:0}}
+.tint{animation-name:tint}
+@keyframes ghost{0%{opacity:0;transform:translate(-269.6px,-66.8px) scale(1.2258)}26.658%{opacity:0;transform:translate(-269.6px,-66.8px) scale(1.2258)}26.667%{opacity:1;transform:translate(-269.6px,-66.8px) scale(1.2258)}29.333%{opacity:1;transform:translate(0,0) scale(1)}29.342%{opacity:0;transform:translate(-269.6px,-66.8px) scale(1.2258)}100%{opacity:0;transform:translate(-269.6px,-66.8px) scale(1.2258)}}
+.ghost{animation-name:ghost}
+@keyframes brief{0%{opacity:0;transform:translateY(8px)}38.325%{opacity:0;transform:translateY(8px)}38.333%{opacity:0;transform:translateY(8px)}40%{opacity:1;transform:translateY(0)}65%{opacity:1;transform:translateY(0);animation-timing-function:cubic-bezier(.3,0,1,1)}66.667%{opacity:0;transform:translateY(0)}100%{opacity:0;transform:translateY(0)}}
+.brief{animation-name:brief}
+/*END*/
+</style></head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-pen" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-signal" viewBox="0 0 24 24"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/></symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></symbol>
+  </defs>
+</svg>
+<div class="card">
+  <section class="hero" aria-label="SentinelDesk drafts a cited reply to a routine ticket, then sends an outage ticket to an engineer with no reply">
+    <div class="sky" aria-hidden="true"><canvas id="stars" width="1200" height="630"></canvas><div class="haze"></div><div class="fade"></div></div>
+
+    <div class="heads">
+      <h1 class="h-a">Answers that cite their source.</h1>
+      <h1 class="h-b">The hard ones go straight to an engineer.</h1>
+    </div>
+
+    <article class="card-s ai reply">
+      <span class="strip"></span>
+      <p class="aihead"><span class="aimark"><svg class="i"><use href="#i-pen"/></svg></span>Grounded reply
+        <span class="tid stack mono"><span class="id-a">TKT-26887</span><span class="id-b" id="src">TKT-20431</span></span></p>
+      <div class="stack">
+        <p class="ask ask-a">Can you break down the charges on my latest invoice? The total is higher than last month.</p>
+        <p class="ask ask-b">VPN is down for all of our remote clinicians since 08:10. Nobody off-site can reach the EMR.</p>
+      </div>
+      <div class="body stack">
+        <div class="skel"><i></i><i></i><i style="width:62%"></i></div>
+        <p class="text"><span class="s1">Your total rose because the Telehealth add-on started this cycle.<span class="cite"><svg class="i"><use href="#i-link"/></svg>TKT-21540</span></span> <span class="s2">The full line-item breakdown is under Billing, then Invoices.<span class="cite"><svg class="i"><use href="#i-link"/></svg>TKT-18802</span></span></p>
+        <p class="none">No draft for this ticket.</p>
+      </div>
+      <div class="foot stack">
+        <span class="badge b-ok ok"><svg class="i"><use href="#i-check"/></svg>2 of 2 supported</span>
+        <span class="badge b-crit esc"><svg class="i"><use href="#i-alert"/></svg>Escalate</span>
+      </div>
+    </article>
+
+    <div class="card-s inbox">
+      <p class="lbl"><svg class="i"><use href="#i-inbox"/></svg>Engineer inbox</p>
+      <div class="list"><div class="rows">
+        <div class="irow new">
+          <span class="tint"></span>
+          <span class="t nrow">VPN down for all remote clinicians</span>
+          <span class="m nrow"><span class="badge b-crit"><svg class="i"><use href="#i-signal"/></svg>High</span><span class="mono nid" id="dst">TKT-20431</span><span class="mono">08:12</span></span>
+        </div>
+        <div class="irow q"><span class="t">Single sign-on loop for one user</span><span class="m"><span class="dot"></span><span class="mono">07:54</span></span></div>
+        <div class="irow q"><span class="t">Add a clinic location to the account</span><span class="m"><span class="dot"></span><span class="mono">07:31</span></span></div>
+        <div class="irow q"><span class="t">Desktop app keeps signing me out</span><span class="m"><span class="dot"></span><span class="mono">07:12</span></span></div>
+      </div></div>
+    </div>
+
+    <div class="card-s ai brief">
+      <span class="strip"></span>
+      <p class="aihead"><span class="aimark"><svg class="i"><use href="#i-pen"/></svg></span>Handoff brief</p>
+      <p class="txt">Remote clinicians have had no VPN since 08:10 and cannot reach the EMR. No past case matches, so the customer got no automated reply.</p>
+    </div>
+
+    <span class="ghost mono">TKT-20431</span>
+  </section>
+  <section class="panel">
+    <div class="row"><h2>SentinelDesk <small>Team 15 version</small></h2>
+      <span class="award"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>1st place · GDG Boston</span></div>
+    <p>Built in under six hours: a fully local AI support desk that triages tickets, drafts cited replies, and hands off hard cases with the analysis ready.</p>
+    <div class="meta"><span>Web app</span><span>Multilingual</span><time>NOV 2026</time></div>
+  </section>
+</div>
+<script>
+// Static, seeded starfield ported from docs/demo/index.html. Drawn once; no animation.
+(function(){
+  var cv=document.getElementById('stars'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height,dpr=1;
+  function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+  var R=rng(20261121),TEMPS=[[170,195,255],[205,220,255],[255,255,255],[255,244,228],[255,224,190],[255,205,160]];
+  var g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#03051a');g.addColorStop(.32,'#081032');g.addColorStop(.52,'#16245c');g.addColorStop(.68,'#3c5aa6');g.addColorStop(.84,'#a7bdea');g.addColorStop(1,'#e9effb');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  var hz=ctx.createRadialGradient(W*.5,H*.82,0,W*.5,H*.82,W*.6);
+  hz.addColorStop(0,'rgba(190,170,255,.35)');hz.addColorStop(.5,'rgba(120,140,240,.12)');hz.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=hz;ctx.fillRect(0,0,W,H);
+  var ax=-.1*W,ay=.5*H,bx=1.1*W,by=-.14*H,len=Math.hypot(bx-ax,by-ay),ux=(bx-ax)/len,uy=(by-ay)/len,nx=-uy,ny=ux,bw=Math.min(W,H)*.2,dens=Math.min(1,(W*H)/1296000);
+  function band(n,spread,alpha,cols,size){
+    ctx.globalCompositeOperation='lighter';n=Math.round(n*dens);
+    for(var i=0;i<n;i++){
+      var t=R(),o=(R()+R()+R()-1.5)*spread*bw,x=ax+ux*len*t+nx*o,y=ay+uy*len*t+ny*o,s=(size[0]+R()*size[1])*dpr,c=cols[(R()*cols.length)|0];
+      var rg=ctx.createRadialGradient(x,y,0,x,y,s);rg.addColorStop(0,'rgba('+c+','+alpha*(.4+R()*.6)+')');rg.addColorStop(1,'rgba('+c+',0)');
+      ctx.fillStyle=rg;ctx.fillRect(x-s,y-s,s*2,s*2);
+    }
+    ctx.globalCompositeOperation='source-over';
+  }
+  band(260,1.3,.05,['120,140,255','150,120,240','90,120,220'],[60,140]);
+  band(360,.8,.06,['200,190,255','255,210,230','170,190,255'],[24,60]);
+  band(160,.35,.07,['255,236,214','255,220,200','230,220,255'],[14,30]);
+  for(var d=0;d<Math.round(70*dens);d++){
+    var t2=R(),o2=(R()-.5)*.5*bw,x2=ax+ux*len*t2+nx*o2,y2=ay+uy*len*t2+ny*o2,s2=(10+R()*34)*dpr;
+    var dg=ctx.createRadialGradient(x2,y2,0,x2,y2,s2);dg.addColorStop(0,'rgba(4,6,24,.14)');dg.addColorStop(1,'rgba(4,6,24,0)');
+    ctx.fillStyle=dg;ctx.fillRect(x2-s2,y2-s2,s2*2,s2*2);
+  }
+  function star(x,y,big){
+    var c=TEMPS[(R()*TEMPS.length)|0],m=Math.pow(R(),big?1:3.2),rad=(.35+m*(big?1.6:1.05))*dpr,a=.35+m*.65;
+    var fall=Math.max(0,1-y/(H*.9));a*=.35+.65*fall;
+    ctx.fillStyle='rgba('+c+','+a+')';ctx.beginPath();ctx.arc(x,y,rad,0,6.283);ctx.fill();
+    if(big||m>.75){var s=rad*(big?7:4),gl=ctx.createRadialGradient(x,y,0,x,y,s);gl.addColorStop(0,'rgba('+c+','+a*.45+')');gl.addColorStop(1,'rgba('+c+',0)');ctx.fillStyle=gl;ctx.fillRect(x-s,y-s,s*2,s*2)}
+  }
+  var area=W*H,n=Math.round(area/520);
+  for(var i=0;i<n;i++)star(R()*W,Math.pow(R(),1.25)*H,false);
+  for(var j=0;j<n*.9;j++){var t3=R(),o3=(R()+R()-1)*.9*bw;star(ax+ux*len*t3+nx*o3,ay+uy*len*t3+ny*o3,false)}
+  for(var k=0;k<Math.round(area/42000);k++)star(R()*W,Math.pow(R(),1.6)*H*.7,true);
+})();
+</script>
+</body></html>
