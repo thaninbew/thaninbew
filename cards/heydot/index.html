@@ -88,9 +88,9 @@
 <div class="card">
   <section class="hero" id="hero" aria-label="HeyDot: the banner's mic dot is recoloured in the dot designer, moves to the menu bar, and a spoken &quot;Hey Dot&quot; starts a call; mid-call the dot swaps through a rainbow of shapes and the whole app re-themes to each"></section>
   <section class="panel">
-    <div class="row"><h2>HeyDot</h2></div>
-    <p>A menu bar app: say “Hey Dot” from across the room and your ChatGPT dot starts a voice call.</p>
-    <div class="meta"><span>macOS</span><span>On-device wake word</span><time>NOV 2026</time></div>
+    <div class="row"><h2>HeyDot</h2><span class="tag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>Open source</span></div>
+    <p>A menu bar app: say “Hey Dot” from across the room and your ChatGPT dot starts a voice call. Listening is fully local.</p>
+    <div class="meta"><span>macOS</span><span>Free</span><time>NOV 2026</time></div>
   </section>
 </div>
 <script src="layers.js"></script>
@@ -322,15 +322,16 @@ function flatMic(eyes) {
 
 // ---- Banner layers, in banner space (1280 x 640), cover-fitted ----
 const bn = el(hero, 'bn', null, null, '', `transform:translate(${OX}px,0) scale(${K})`);
-// Floating dots live in hero space and move by whole device pixels, so a frame where no dot crosses a pixel
-// boundary is identical to the last (keeps the animated WebP small).
+// Floating dots live in hero space and move by fractional pixels: every frame is a full keyframe, so snapping to whole
+// pixels saves nothing and makes slow motion step.
 const DRIFT = L.dots.map((d, i) => {
   const fx = d.depth === 'bg' ? 'filter:blur(1.6px);opacity:.72' : '';
   const [cx, cy] = toC(d.x, d.y), sz = d.s * K;
   const e = el(hero, 'fd', cx - sz / 2, cy - sz / 2, `<div style="inset:0;transform:rotate(${d.rot}deg)">${d.svg}</div>`, `width:${sz}px;height:${sz}px;${fx}`);
-  // Gentle drift: sinusoids whose periods divide the loop, offset so time 0 is exactly the banner.
-  const k = [1, 2, 1, 2, 1, 1, 2, 1, 2, 1][i % 10], ph = i * 2.39, amp = 4 + (d.s / 112) * 5;
-  return { e, d, k, ph, amp, k2: k === 1 ? 2 : 1 };
+  // Floating: a vertical bob (7 s or 4.7 s), a slower sideways drift and a slight sway. Every period divides the loop
+  // and every offset is zero at time 0, so the first frame is exactly the banner and the loop is seamless.
+  const s = d.s / 112, ph = i * 2.39;
+  return { e, d, ph, ky: [2, 3][i % 2], kx: [1, 2, 1][i % 3], ay: 6 + 5 * s, ax: 3 + 3 * s, ar: 2 + 2 * s };
 });
 const sp = L.speaker;
 const bn2 = el(hero, 'bn', null, null, '', `transform:translate(${OX}px,0) scale(${K});background:none`);
@@ -537,11 +538,12 @@ window.__frame = ms => {
   const spOut = easeIn(span(t, cue.leave, 300)), spIn = easeBack(span(t, cue.back + 1000, 420));
   const spV = t < cue.back ? 1 - spOut : spIn;
   const w = 2 * Math.PI * t / LOOP;
+  const bob = (a, k, ph) => a * (Math.sin(w * k + ph) - Math.sin(ph));
   for (const f of DRIFT) {
-    const dx = f.amp * (Math.sin(w * f.k + f.ph) - Math.sin(f.ph)), dy = f.amp * 0.8 * (Math.sin(w * f.k2 + f.ph * 1.7) - Math.sin(f.ph * 1.7));
-    set(f.e, 'transform', `translate(${Math.round(dx)}px,${Math.round(dy)}px)`);
+    const dx = bob(f.ax, f.kx, f.ph * 1.7), dy = bob(f.ay, f.ky, f.ph), r = bob(f.ar, f.kx, f.ph * 0.6);
+    set(f.e, 'transform', `translate(${dx.toFixed(2)}px,${dy.toFixed(2)}px) rotate(${r.toFixed(2)}deg)`);
   }
-  const sdx = Math.round(6 * (Math.sin(w * 2 + 1) - Math.sin(1))), sdy = Math.round(5 * (Math.sin(w + 2) - Math.sin(2)));
+  const sdx = bob(5, 1, 1).toFixed(2), sdy = bob(7, 2, 2).toFixed(2);
   set(speaker, 'opacity', clamp01(spV).toFixed(3));
   set(speaker, 'transform', `translate(${sdx}px,${sdy}px) rotate(${sp.rot}deg) scale(${spV >= 1 ? 1 : (0.6 + 0.4 * spV).toFixed(4)})`);
 
