@@ -1,0 +1,2 @@
+/* Hero-only export: no frame, panel or reflection. Use with CLIP=1200x630. */
+.card{border-radius:0}.card::after,.panel{display:none}.hero{-webkit-box-reflect:none}
