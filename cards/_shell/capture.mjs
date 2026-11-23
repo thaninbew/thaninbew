@@ -1,4 +1,6 @@
 // Usage: node capture.mjs <card.html> <out.webp> <loopMs> [fps=25] [quality=85]
+// Shipped settings: profile cards SCALE=0.6667, fps 20, quality 75-80; HeyDot hero CLIP=1200x630, fps 20, quality 78.
+// SCALE=0.75 renders at that device scale (900x737 for the card) to keep keyframe-only files small.
 // EXTRA_CSS=<file> injects a stylesheet (e.g. _shell/hero-only.css); CLIP=1200x630 crops every frame from the top-left.
 // KEEP_FRAMES=<dir> copies every frame PNG there for review.
 // STILLS="0,2500,6000" env also saves those times as <out>.t<ms>.png.
@@ -14,7 +16,8 @@ const [html, out, loopArg, fpsArg = '25', qArg = '85'] = process.argv.slice(2);
 const loop = +loopArg, fps = +fpsArg, n = Math.round(loop / 1000 * fps);
 const dir = mkdtempSync(join(tmpdir(), 'card-frames-'));
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1200, height: 982 }, deviceScaleFactor: 1 });
+const scale = +(process.env.SCALE || 1);
+const page = await browser.newPage({ viewport: { width: 1200, height: 982 }, deviceScaleFactor: scale });
 page.on('console', m => m.type() === 'error' && console.error('page:', m.text()));
 page.on('pageerror', e => console.error('pageerror:', e.message));
 await page.goto('file://' + resolve(html));
@@ -30,13 +33,14 @@ for (let i = 0; i < n; i++) {
 }
 await browser.close();
 const frames = readdirSync(dir).sort().map(f => join(dir, f));
-// Every frame is a lossy keyframe: sub-frame blending accumulates lossy residue (ghosting) across the loop.
-execFileSync('img2webp', ['-loop', '0', '-kmax', '0', '-lossy', '-exact', '-q', qArg, '-m', '4', '-d', String(Math.round(1000 / fps)), ...frames, '-o', out]);
+// Every frame is a full lossy keyframe (libwebp: kmax 1 = all keyframes; kmax 0 DISABLES them).
+// Lossy sub-rectangle deltas blended over the previous frame leave blocky ghosting in soft backgrounds.
+execFileSync('img2webp', ['-loop', '0', '-kmin', '0', '-kmax', '1', '-lossy', '-exact', '-q', qArg, '-m', '4', '-d', String(Math.round(1000 / fps)), ...frames, '-o', out]);
 execFileSync('cp', [frames[0], out.replace(/\.webp$/, '.first.png')]);
 execFileSync('cp', [frames[Math.floor(n / 2)], out.replace(/\.webp$/, '.mid.png')]);
 if (process.env.STILLS) {
   const b2 = await chromium.launch();
-  const p2 = await b2.newPage({ viewport: { width: 1200, height: 982 }, deviceScaleFactor: 1 });
+  const p2 = await b2.newPage({ viewport: { width: 1200, height: 982 }, deviceScaleFactor: scale });
   await p2.goto('file://' + resolve(html));
   if (process.env.EXTRA_CSS) await p2.addStyleTag({ path: resolve(process.env.EXTRA_CSS) });
   await p2.evaluate(() => document.fonts.ready);
